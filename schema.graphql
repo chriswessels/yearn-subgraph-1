@@ -1,85 +1,175 @@
-# Note: For performance fee, see: https://docs.yearn.finance/faq#can-you-explain-the-5-fee-on-additional-yield
-
-# type Vault @entity {
-#   "Vault address"
-#   id: ID!
-# }
-
+type Token @entity {
+  "Token address"
+  id: ID!
+  "Number of decimals for this Token"
+  decimals: Int!
+  "Name of the Token"
+  name: String!
+  "Symbol of the Token"
+  symbol: String!
+}
 
 type Vault @entity {
   "Vault address"
   id: ID!
-  "Deposit (want) token info"
+  "Token this Vault will accrue"
   token: Token!
-  "Share token (ytoken) info"
+  "Balance of Tokens in the Vault and its Strategies"
+  tokensBalanceRaw: BigInt!
+  "Current idle Token balance"
+  tokensIdleBalanceRaw: BigInt! # Tokens in the Vault contract
+  "Balance of Tokens invested into Strategies"
+  tokensStrategyDebtTotalRaw: BigInt!
+  "Sum of all Deposits over time"
+  tokensDepositedRaw: BigInt!
+  "Sum of all Withdrawals over time"
+  tokensWithdrawnRaw: BigInt!
+  "Deposit limit for Tokens in the Vault"
+  tokensDepositLimitRaw: BigInt!
+  "Token representing Shares in the Vault"
   shareToken: Token!
-  "Current controller"
-  controller: Controller!
-  # FIXME: Uncomment
-  # "Current strategy"
-  # strategy: Strategy!
-  # TODO: replace with timestamp when was created
-  "Creation timestamp"
-  timestamp: BigInt!
-  # TODO: replace with blockNumber when was created
-  "Creation block number"
-  blockNumber: BigInt!
+  "Current supply of Shares"
+  sharesSupplyRaw: BigInt!
+  "Sum of Shares minted over all time"
+  sharesMintedRaw: BigInt!
+  "Sum of Shares burnt over all time"
+  sharesBurntRaw: BigInt!
+  "Current price per full share"
+  pricePerShareRaw: BigInt!
+  "12-day EMA of Vault APY"
+  apy12dEMA: Int!
+  "50-day EMA of Vault APY"
+  apy50dEMA: Int!
+  "Management fee in basis points"
+  feeManagementBps: Int!
+  "Performance fee in basis points"
+  feePerformanceBps: Int!
+  "Total fee revenue generated in Shares"
+  feeSharesIssuedTotalRaw: BigInt!
+  "Performance generated in Tokens"
+  earningsTotalRaw: BigInt!
+
+  # emergency shutdown?
+  # withdrawal queue
 
   "Vault stats"
-  vaultUpdates: [VaultUpdate]! # TODO: check if derive is better here derivedFrom(field: "vault")
+  # vaultUpdates: [VaultUpdate]! # TODO: check if derive is better here derivedFrom(field: "vault")
   # FIXME: Uncomment
   # "Strategy stats"
   # strategyUpdates: [StrategyUpdate!]! # TODO: to derive it I need vault field
 
-  # FIXME: Uncomment
-  # "Users balances"
-  # balances: [AccountVaultBalance!]! @derivedFrom(field: "vault")
-  # FIXME: Uncomment
-  # "Users deposits"
-  # deposits: [Deposit!]! @derivedFrom(field: "vault")
-  # FIXME: Uncomment
-  # "Users withdrawals"
-  # withdrawals: [Withdrawal!]! @derivedFrom(field: "vault")
-  # FIXME: Uncomment
-  # "harvest() calls"
-  # harvests: [Harvest!]! @derivedFrom(field: "vault")
-  # FIXME: Uncomment
-  # "Previously active strategies"
-  # strategies: [Strategy!]! @derivedFrom(field: "vault")
+  "Creation timestamp"
+  creationTimestamp: BigInt!
+  "Creation block number"
+  creationBlockNumber: BigInt!
+
+  "Strategies for this Vault"
+  strategies: [Strategy!]! @derivedFrom(field: "vault")
+  "Token deposits into the Vault"
+  deposits: [VaultDeposit!]! @derivedFrom(field: "vault")
+  "Token withdrawals from the Vault"
+  withdrawals: [VaultWithdrawal!]! @derivedFrom(field: "vault")
+  "Transfers of Vault Shares"
+  shareTransfers: [VaultShareTransfer!]! @derivedFrom(field: "vault")
 }
 
-# interface for user and vault balances
-interface BalanceUpdate {
+type Account @entity {
+  "Account address"
   id: ID!
-  timestamp: BigInt!
-  blockNumber: BigInt!
+  "Vault deposits"
+  deposits: [VaultDeposit!]! @derivedFrom(field: "account")
+  "Vault withdrawals"
+  withdrawals: [VaultWithdrawal!]! @derivedFrom(field: "account")
+  "Vault balances"
+  vaultBalances: [AccountVaultBalance!]! @derivedFrom(field: "account")
 
-  "Deposit (want) token balance"
-  balance: BigInt!
-  "Total (want) token deposits"
-  deposits: BigInt!
-  "Total (want) token withdrawals"
-  withdrawals: BigInt!
-
-  "Share token (ytoken) balance"
-  shareBalance: BigInt!
-  "Total share tokens (ytoken) minted"
-  sharesMinted: BigInt!
-  "Total share tokens (ytoken) burnt"
-  sharesBurnt: BigInt!
+  "Incoming share transfers"
+  sharesReceived: [VaultShareTransfer!]! @derivedFrom(field: "to")
+  "Outgoing share transfers"
+  sharesSent: [VaultShareTransfer!]! @derivedFrom(field: "from")
 }
 
-type VaultUpdate implements BalanceUpdate @entity {
+type VaultDeposit @entity {
+  "Transaction-Log"
+  id: ID!
+  "Account making Deposit"
+  account: Bytes!
+  "Vault deposited into"
+  vault: Vault!
+  "Number of Tokens deposited into Vault"
+  tokenAmountRaw: BigInt!
+  "Number of new Vault Shares minted"
+  sharesMintedRaw: BigInt!
+}
+
+type VaultWithdrawal @entity {
+  "Transaction-Log"
+  id: ID!
+  "Account making Deposit"
+  account: Bytes!
+  "Vault withdrawn from"
+  vault: Vault!
+  "Number of Tokens withdrawn from Vault"
+  tokenAmountRaw: BigInt!
+  "Number of Vault Shares burnt"
+  sharesBurntRaw: BigInt!
+}
+
+type VaultShareTransfer @entity {
+  "Transaction-Log"
+  id: ID!
+  "Vault"
+  vault: Vault!
+  "Sender"
+  from: Account!
+  "Receiver"
+  to: Account!
+  "Number of Vault Shares transferred"
+  amount: BigInt!
+  "Number of Tokens redeemable for shares transferred"
+  tokens: BigInt!
+  "Vault Token"
+  token: Token!
+  "Vault Share Token"
+  shareToken: Token!
+  "Timestamp of Transfer"
+  timestamp: BigInt!
+  "Block number of Transfer"
+  blockNumber: BigInt!
+}
+
+type AccountVaultBalance @entity {
+  "Account-Vault"
+  id: ID!
+  "Vault"
+  vault: Vault!
+  "Account"
+  account: Account!
+  "Vault token"
+  token: Token!
+  "Vault share token"
+  shareToken: Token!
+  "Current balance of Tokens redeemable from Vault"
+  tokenBalanceRaw: BigInt!
+  "Current balance of Vault shares"
+  shareBalanceRaw: BigInt!
+  "Account updates over time"
+  historicalUpdates: [AccountUpdate!]!
+}
+
+type VaultUpdate @entity {
   "Vault-Transaction-Log"
   id: ID!
+  "Timestamp of update"
   timestamp: BigInt!
+  "Block number of update"
   blockNumber: BigInt!
 
-  "Deposit (want) token balance"
+  "Vault Token balance"
   balance: BigInt!
-  "Total (want) token deposits"
+  "Total Token deposits"
   deposits: BigInt!
-  "Total (want) token withdrawals"
+  "Total Token withdrawals"
   withdrawals: BigInt!
 
   "Share token (ytoken) balance - totalSupply()"
@@ -104,7 +194,7 @@ type VaultUpdate implements BalanceUpdate @entity {
   performanceFees: BigInt!
 }
 
-type AccountUpdate implements BalanceUpdate @entity {
+type AccountUpdate @entity {
   "Account-Transaction-Log"
   id: ID!
   timestamp: BigInt!
@@ -137,151 +227,56 @@ type AccountUpdate implements BalanceUpdate @entity {
   sharesReceived: BigInt!
 }
 
-type Account @entity {
-  "Account address"
-  id: ID!
+# type StrategyUpdate @entity {
+#   "Strategy-Transaction-Log"
+#   id: ID!
+#   timestamp: BigInt!
+#   blockNumber: BigInt!
 
-  # FIXME: Uncomment
-  # "Vault deposits"
-  # deposits: [Deposit!]! @derivedFrom(field: "account")
-  # FIXME: Uncomment
-  # "Vault withdrawals"
-  # withdrawals: [Withdrawal!]! @derivedFrom(field: "account")
-  # FIXME: Uncomment
-  # vaultBalances: [AccountVaultBalance!]! @derivedFrom(field: "account")
+#   strategy: Strategy!
+#   "Deposit (want) token balance"
+#   balance: BigInt!
+#   # TODO: (?) denominated to
+#   "Total performance fees"
+#   earnings: BigInt!
+# }
 
-  # FIXME: Uncomment
-  # "Incoming transfers"
-  # received: [Transfer!]! @derivedFrom(field: "to")
-  # FIXME: Uncomment
-  # "Outgoing transfers"
-  # sent: [Transfer!]! @derivedFrom(field: "from")
-}
+# type Harvest @entity {
+#   "Strategy-Transaction-Log"
+#   id: ID!
+#   vault: Vault!
+#   strategy: Strategy!
+#   "Function caller"
+#   harvester: Bytes!
 
-type AccountVaultBalance @entity {
-  "Account-Vault"
-  id: ID!
-  vault: Vault!
-  account: Account!
-  "Deposit (want) token info"
-  token: Token!
-  "Share token (ytoken) info"
-  shareToken: Token!
+#   "Vault stats"
+#   vaultUpdate: VaultUpdate!
+#   "Strategy stats"
+#   strategyUpdate: StrategyUpdate!
 
-  "Account stats"
-  accountUpdates: [AccountUpdate!]!
-}
+#   timestamp: BigInt!
+#   blockNumber: BigInt!
+# }
 
-type Token @entity {
-  "Token address"
-  id: ID!
-  address: Bytes!
-  decimals: Int!
-  # TODO: (?) add hardcode overwrite in code
-  name: String!
-  # TODO: (?) add hardcode overwrite in code
-  symbol: String!
-}
+# enum StrategyStatus {
+#   Active
+#   Retired
+# }
 
-type Transfer @entity {
-  "Transaction-Log"
-  id: ID!
-  "Sender"
-  from: Account!
-  "Receiver"
-  to: Account!
-  "Share token (ytoken) amount"
-  shares: BigInt!
-  "Share token (ytoken) amount denominated to (want) token"
-  amount: BigInt!
+# type Strategy @entity {
+#   "Strategy address"
+#   id: ID!
+#   vault: Vault!
+#   # TODO: (?) add hardcode overwrite for names that are missing
+#   name: String!
+#   "Current controller"
+#   controller: Controller!
 
-  token: Token!
-  timestamp: BigInt!
-  blockNumber: BigInt!
-}
+#   "Strategy stats"
+#   strategyUpdates: [StrategyUpdate!]! @derivedFrom(field: "strategy")
+#   "Active or retired"
+#   strategyStatus: StrategyStatus
 
-enum Action {
-  Withdrawal
-  Deposit
-}
-
-type Operation @entity {
-  "Transaction-Log"
-  id: ID!
-  vault: Vault!
-  account: Account!
-  "Deposit/Withdrawal (want) token amount"
-  amount: BigInt!
-  "Share token (ytoken) amount"
-  shares: BigInt!
-  timestamp: BigInt!
-  blockNumber: BigInt!
-  "Deposit or Withdrawal"
-  type: Action!
-
-  # (!) VaultUpdate is created on Deposit
-  # vaultStats: VaultUpdate!
-}
-
-type StrategyUpdate @entity {
-  "Strategy-Transaction-Log"
-  id: ID!
-  timestamp: BigInt!
-  blockNumber: BigInt!
-
-  strategy: Strategy!
-  "Deposit (want) token balance"
-  balance: BigInt!
-  # TODO: (?) denominated to
-  "Total performance fees"
-  earnings: BigInt!
-}
-
-type Harvest @entity {
-  "Strategy-Transaction-Log"
-  id: ID!
-  vault: Vault!
-  strategy: Strategy!
-  "Function caller"
-  harvester: Bytes!
-
-  "Vault stats"
-  vaultUpdate: VaultUpdate!
-  "Strategy stats"
-  strategyUpdate: StrategyUpdate!
-
-  timestamp: BigInt!
-  blockNumber: BigInt!
-}
-
-enum StrategyStatus {
-  Active
-  Retired
-}
-
-type Strategy @entity {
-  "Strategy address"
-  id: ID!
-  vault: Vault!
-  # TODO: (?) add hardcode overwrite for names that are missing
-  name: String!
-  "Current controller"
-  controller: Controller!
-
-  "Strategy stats"
-  strategyUpdates: [StrategyUpdate!]! @derivedFrom(field: "strategy")
-  "Active or retired"
-  strategyStatus: StrategyStatus
-
-  "harvest() calls"
-  harvests: [Harvest!]! @derivedFrom(field: "strategy")
-}
-
-type Controller @entity {
-  id: ID!
-  # FIXME: Uncomment
-  # "Active vaults"
-  # vaults: [Vault!]! @derivedFrom(field: "controller")
-  "Active strategies"
-  strategies: [Strategy!]! @derivedFrom(field: "controller")
-}
+#   "harvest() calls"
+#   harvests: [Harvest!]! @derivedFrom(field: "strategy")
+# }
