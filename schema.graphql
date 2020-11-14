@@ -14,40 +14,12 @@ type Vault @entity {
   id: ID!
   "Token this Vault will accrue"
   token: Token!
-  "Balance of Tokens in the Vault and its Strategies"
-  tokensBalanceRaw: BigInt!
-  "Current idle Token balance"
-  tokensIdleBalanceRaw: BigInt! # Tokens in the Vault contract
-  "Balance of Tokens invested into Strategies"
-  tokensStrategyDebtTotalRaw: BigInt!
-  "Sum of all Deposits over time"
-  tokensDepositedRaw: BigInt!
-  "Sum of all Withdrawals over time"
-  tokensWithdrawnRaw: BigInt!
-  "Deposit limit for Tokens in the Vault"
-  tokensDepositLimitRaw: BigInt!
   "Token representing Shares in the Vault"
   shareToken: Token!
-  "Current supply of Shares"
-  sharesSupplyRaw: BigInt!
-  "Sum of Shares minted over all time"
-  sharesMintedRaw: BigInt!
-  "Sum of Shares burnt over all time"
-  sharesBurntRaw: BigInt!
-  "Current price per full share"
-  pricePerShareRaw: BigInt!
-  "12-day EMA of Vault APY"
-  apy12dEMA: Int!
-  "50-day EMA of Vault APY"
-  apy50dEMA: Int!
-  "Management fee in basis points"
-  feeManagementBps: Int!
-  "Performance fee in basis points"
-  feePerformanceBps: Int!
-  "Total fee revenue generated in Shares"
-  feeSharesIssuedTotalRaw: BigInt!
-  "Performance generated in Tokens"
-  earningsTotalRaw: BigInt!
+  "Latest Vault Update"
+  latestUpdate: VaultUpdate!
+  "All Vault Updates"
+  historicalUpdates: [VaultUpdate!]! @derivedFrom(field: "vault")
 
   # emergency shutdown?
   # withdrawal queue
@@ -71,6 +43,52 @@ type Vault @entity {
   withdrawals: [VaultWithdrawal!]! @derivedFrom(field: "vault")
   "Transfers of Vault Shares"
   shareTransfers: [VaultShareTransfer!]! @derivedFrom(field: "vault")
+}
+
+type VaultUpdate @entity {
+  "Vault-Transaction-Log"
+  id: ID!
+  "Timestamp of update"
+  timestamp: BigInt!
+  "Block number of update"
+  blockNumber: BigInt!
+  "Vault this update is for"
+  vault: Vault!
+
+  "Balance of Tokens in the Vault and its Strategies"
+  tokensBalanceRaw: BigInt!
+  "Current idle Token balance"
+  tokensIdleBalanceRaw: BigInt! # Tokens in the Vault contract
+  "Balance of Tokens invested into Strategies"
+  tokensStrategyDebtTotalRaw: BigInt!
+  "Sum of all Deposits over time"
+  tokensDepositedRaw: BigInt!
+  "Sum of all Withdrawals over time"
+  tokensWithdrawnRaw: BigInt!
+  "Deposit limit for Tokens in the Vault"
+  tokensDepositLimitRaw: BigInt!
+  "Current supply of Shares"
+  sharesSupplyRaw: BigInt!
+  "Sum of Shares minted over all time"
+  sharesMintedRaw: BigInt!
+  "Sum of Shares burnt over all time"
+  sharesBurntRaw: BigInt!
+  "Current price per full share"
+  pricePerShareRaw: BigInt!
+  "12-day EMA of Vault APY"
+  apy12dEMA: Int!
+  "50-day EMA of Vault APY"
+  apy50dEMA: Int!
+  "Total earnings generated in Tokens"
+  earningsTotalRaw: BigInt!
+  "Total management fee revenue in Tokens"
+  feesManagementTotalRaw: BigInt!
+  "Total performance fee revenue in Tokens"
+  feesPerformanceTotalRaw: BigInt!
+  "Management fee in basis points"
+  feeManagementBps: Int!
+  "Performance fee in basis points"
+  feePerformanceBps: Int!
 }
 
 type Account @entity {
@@ -157,75 +175,38 @@ type AccountVaultBalance @entity {
   historicalUpdates: [AccountUpdate!]!
 }
 
-type VaultUpdate @entity {
-  "Vault-Transaction-Log"
-  id: ID!
-  "Timestamp of update"
-  timestamp: BigInt!
-  "Block number of update"
-  blockNumber: BigInt!
+# type AccountUpdate @entity {
+#   "Account-Transaction-Log"
+#   id: ID!
+#   timestamp: BigInt!
+#   blockNumber: BigInt!
 
-  "Vault Token balance"
-  balance: BigInt!
-  "Total Token deposits"
-  deposits: BigInt!
-  "Total Token withdrawals"
-  withdrawals: BigInt!
+#   "Deposit (want) token balance"
+#   balance: BigInt!
+#   "Total (want) token deposits"
+#   deposits: BigInt!
+#   "Total (want) token withdrawals"
+#   withdrawals: BigInt!
 
-  "Share token (ytoken) balance - totalSupply()"
-  shareBalance: BigInt!
-  "Total share tokens (ytoken) minted"
-  sharesMinted: BigInt!
-  "Total share tokens (ytoken) burnt"
-  sharesBurnt: BigInt!
+#   "Share token (ytoken) balance"
+#   shareBalance: BigInt!
+#   "Total share tokens (ytoken) minted"
+#   sharesMinted: BigInt!
+#   "Total share tokens (ytoken) burnt"
+#   sharesBurnt: BigInt!
 
-  vault: Vault!
+#   account: Account!
 
-  "Share token (ytoken) price denominated to (want) token"
-  pricePerFullShare: BigInt!
-  # TODO: (?) denominated to
-  "Total (withdrawal + performance) fees"
-  earnings: BigInt!
-  # TODO: (?) denominated to
-  "Total withdrawal fees"
-  withdrawalFees: BigInt!
-  # TODO: (?) denominated to
-  "Total performance fees"
-  performanceFees: BigInt!
-}
+#   "Total (want) tokens sent"
+#   sent: BigInt!
+#   "Total (want) tokens received"
+#   received: BigInt!
 
-type AccountUpdate @entity {
-  "Account-Transaction-Log"
-  id: ID!
-  timestamp: BigInt!
-  blockNumber: BigInt!
-
-  "Deposit (want) token balance"
-  balance: BigInt!
-  "Total (want) token deposits"
-  deposits: BigInt!
-  "Total (want) token withdrawals"
-  withdrawals: BigInt!
-
-  "Share token (ytoken) balance"
-  shareBalance: BigInt!
-  "Total share tokens (ytoken) minted"
-  sharesMinted: BigInt!
-  "Total share tokens (ytoken) burnt"
-  sharesBurnt: BigInt!
-
-  account: Account!
-
-  "Total (want) tokens sent"
-  sent: BigInt!
-  "Total (want) tokens received"
-  received: BigInt!
-
-  "Total share tokens (ytoken) sent"
-  sharesSent: BigInt!
-  "Total share tokens (ytoken) received"
-  sharesReceived: BigInt!
-}
+#   "Total share tokens (ytoken) sent"
+#   sharesSent: BigInt!
+#   "Total share tokens (ytoken) received"
+#   sharesReceived: BigInt!
+# }
 
 # type StrategyUpdate @entity {
 #   "Strategy-Transaction-Log"
