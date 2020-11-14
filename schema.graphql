@@ -24,12 +24,6 @@ type Vault @entity {
   # emergency shutdown?
   # withdrawal queue
 
-  "Vault stats"
-  # vaultUpdates: [VaultUpdate]! # TODO: check if derive is better here derivedFrom(field: "vault")
-  # FIXME: Uncomment
-  # "Strategy stats"
-  # strategyUpdates: [StrategyUpdate!]! # TODO: to derive it I need vault field
-
   "Creation timestamp"
   creationTimestamp: BigInt!
   "Creation block number"
