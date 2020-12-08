@@ -32,11 +32,11 @@ type Vault @entity {
   "Strategies for this Vault"
   strategies: [Strategy!]! @derivedFrom(field: "vault")
   "Token deposits into the Vault"
-  deposits: [VaultDeposit!]! @derivedFrom(field: "vault")
+  deposits: [Deposit!]! @derivedFrom(field: "vault")
   "Token withdrawals from the Vault"
-  withdrawals: [VaultWithdrawal!]! @derivedFrom(field: "vault")
+  withdrawals: [Withdrawal!]! @derivedFrom(field: "vault")
   "Transfers of Vault Shares"
-  shareTransfers: [VaultShareTransfer!]! @derivedFrom(field: "vault")
+  shareTransfers: [Transfer!]! @derivedFrom(field: "vault")
 }
 
 type VaultUpdate @entity {
@@ -50,35 +50,36 @@ type VaultUpdate @entity {
   vault: Vault!
 
   "Balance of Tokens in the Vault and its Strategies"
-  tokensBalanceRaw: BigInt!
+  tokensBalance: BigInt!
   "Current idle Token balance"
-  tokensIdleBalanceRaw: BigInt! # Tokens in the Vault contract
+  tokensIdleBalance: BigInt! # Tokens in the Vault contract
   "Balance of Tokens invested into Strategies"
-  tokensStrategyDebtTotalRaw: BigInt!
+  tokensStrategyDebtTotal: BigInt!
   "Sum of all Deposits over time"
-  tokensDepositedRaw: BigInt!
+  tokensDeposited: BigInt!
   "Sum of all Withdrawals over time"
-  tokensWithdrawnRaw: BigInt!
+  tokensWithdrawn: BigInt!
   "Deposit limit for Tokens in the Vault"
-  tokensDepositLimitRaw: BigInt!
+  tokensDepositLimit: BigInt!
   "Current supply of Shares"
-  sharesSupplyRaw: BigInt!
+  sharesSupply: BigInt!
   "Sum of Shares minted over all time"
-  sharesMintedRaw: BigInt!
+  sharesMinted: BigInt!
   "Sum of Shares burnt over all time"
-  sharesBurntRaw: BigInt!
+  sharesBurnt: BigInt!
   "Current price per full share"
-  pricePerShareRaw: BigInt!
-  "12-day EMA of Vault APY"
-  apy12dEMA: Int!
-  "50-day EMA of Vault APY"
-  apy50dEMA: Int!
+  pricePerShare: BigInt!
+  #### Awaiting updated Vault Yield-Oracles
+  # "12-day EMA of Vault APY"
+  # apy12dEMA: Int!
+  # "50-day EMA of Vault APY"
+  # apy50dEMA: Int!
   "Total earnings generated in Tokens"
-  earningsTotalRaw: BigInt!
+  earningsTotal: BigInt!
   "Total management fee revenue in Tokens"
-  feesManagementTotalRaw: BigInt!
+  feesManagementTotal: BigInt!
   "Total performance fee revenue in Tokens"
-  feesPerformanceTotalRaw: BigInt!
+  feesPerformanceTotal: BigInt!
   "Management fee in basis points"
   feeManagementBps: Int!
   "Performance fee in basis points"
@@ -89,19 +90,19 @@ type Account @entity {
   "Account address"
   id: ID!
   "Vault deposits"
-  deposits: [VaultDeposit!]! @derivedFrom(field: "account")
+  deposits: [Deposit!]! @derivedFrom(field: "account")
   "Vault withdrawals"
-  withdrawals: [VaultWithdrawal!]! @derivedFrom(field: "account")
+  withdrawals: [Withdrawal!]! @derivedFrom(field: "account")
   "Vault balances"
   vaultBalances: [AccountVaultBalance!]! @derivedFrom(field: "account")
 
   "Incoming share transfers"
-  sharesReceived: [VaultShareTransfer!]! @derivedFrom(field: "to")
+  sharesReceived: [Transfer!]! @derivedFrom(field: "to")
   "Outgoing share transfers"
-  sharesSent: [VaultShareTransfer!]! @derivedFrom(field: "from")
+  sharesSent: [Transfer!]! @derivedFrom(field: "from")
 }
 
-type VaultDeposit @entity {
+type Deposit @entity {
   "Transaction-Log"
   id: ID!
   "Account making Deposit"
@@ -109,12 +110,12 @@ type VaultDeposit @entity {
   "Vault deposited into"
   vault: Vault!
   "Number of Tokens deposited into Vault"
-  tokenAmountRaw: BigInt!
+  tokenAmount: BigInt!
   "Number of new Vault Shares minted"
-  sharesMintedRaw: BigInt!
+  sharesMinted: BigInt!
 }
 
-type VaultWithdrawal @entity {
+type Withdrawal @entity {
   "Transaction-Log"
   id: ID!
   "Account making Deposit"
@@ -122,12 +123,12 @@ type VaultWithdrawal @entity {
   "Vault withdrawn from"
   vault: Vault!
   "Number of Tokens withdrawn from Vault"
-  tokenAmountRaw: BigInt!
+  tokenAmount: BigInt!
   "Number of Vault Shares burnt"
-  sharesBurntRaw: BigInt!
+  sharesBurnt: BigInt!
 }
 
-type VaultShareTransfer @entity {
+type Transfer @entity {
   "Transaction-Log"
   id: ID!
   "Vault"
@@ -136,14 +137,14 @@ type VaultShareTransfer @entity {
   from: Account!
   "Receiver"
   to: Account!
-  "Number of Vault Shares transferred"
-  amount: BigInt!
-  "Number of Tokens redeemable for shares transferred"
-  tokens: BigInt!
-  "Vault Token"
-  token: Token!
   "Vault Share Token"
   shareToken: Token!
+  "Number of Vault Shares transferred"
+  amount: BigInt!
+  "Vault Token"
+  token: Token!
+  "Number of Tokens redeemable for shares transferred"
+  tokenAmount: BigInt!
   "Timestamp of Transfer"
   timestamp: BigInt!
   "Block number of Transfer"
@@ -162,9 +163,9 @@ type AccountVaultBalance @entity {
   "Vault share token"
   shareToken: Token!
   "Current balance of Tokens redeemable from Vault"
-  tokenBalanceRaw: BigInt!
+  tokenBalance: BigInt!
   "Current balance of Vault shares"
-  shareBalanceRaw: BigInt!
+  shareBalance: BigInt!
   "Account updates over time"
   historicalUpdates: [AccountUpdate!]!
 }
